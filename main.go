@@ -69,8 +69,9 @@ func main() {
 
 	prep_data()
 
-	go serve("udp", "127.0.0.1", "5358")
+	go serve("udp", "0.0.0.0", "5358")
+	go serve("tcp", "0.0.0.0", "5358")
 
 	router := GetRouter()
-	http.ListenAndServe(":9001", router)
+	http.ListenAndServe(":8080", router)
 }
