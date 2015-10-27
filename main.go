@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/miekg/dns"
 	"gopkg.in/redis.v3"
+	"log"
 	"net/http"
 	"time"
 )
@@ -39,10 +40,12 @@ func Add_empty_zone(zone_name string) {
 	now := time.Now()
 	serial := now.Unix()
 
-	_, err := client.SAdd("zones", zone_name).Result()
+	res, err := client.SAdd("zones", zone_name).Result()
+	log.Println(fmt.Sprintf("Adding %s to zones, result: %s", zone_name, res))
 	if err != nil {
 		panic(err)
 	}
+
 	err = client.Set(zone_name+".2", zone_name+". 86400  IN  NS  ns.mariodns.com.", 0).Err()
 	client.SAdd(zone_name, zone_name+".2")
 
@@ -65,7 +68,7 @@ func main() {
 	})
 
 	pong, err := client.Ping().Result()
-	fmt.Println(fmt.Sprintf("Ping to Redis result: %s, error: %s", pong, err))
+	log.Println(fmt.Sprintf("Ping to Redis result: %s, error: %s", pong, err))
 
 	prep_data()
 

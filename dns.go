@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/miekg/dns"
 	"gopkg.in/redis.v3"
+	"log"
 	"strconv"
 	"strings"
 	"time"
@@ -17,10 +18,10 @@ func handle(writer dns.ResponseWriter, request *dns.Msg) {
 
 	switch request.Opcode {
 	case dns.OpcodeNotify:
-        fmt.Println(fmt.Sprintf("Recieved NOTIFY for %s", question.Name))
+		log.Println(fmt.Sprintf("Recieved NOTIFY for %s", question.Name))
 		message = handle_notify(question, message, writer)
 	case dns.OpcodeQuery:
-        fmt.Println(fmt.Sprintf("Recieved QUERY for %s", question.Name))
+		log.Println(fmt.Sprintf("Recieved QUERY for %s", question.Name))
 		message = handle_query(question, message, writer)
 	default:
 		message = handle_error(message, writer, "REFUSED")
@@ -71,7 +72,7 @@ func handle_query(question dns.Question, message *dns.Msg, writer dns.ResponseWr
 		// If this isn't speedy, can fix later
 		ansRR, _ := dns.NewRR(val)
 		message.Answer = append(message.Answer, ansRR)
-		fmt.Println(key, val)
+		log.Println(key, val)
 	}
 
 	return message
@@ -96,7 +97,7 @@ func handle_notify(question dns.Question, message *dns.Msg, writer dns.ResponseW
 	// }
 	zone, err := do_axfr(zone_name)
 	if len(zone) == 0 || err != nil {
-        fmt.Println("There was a problem with the AXFR, or there were no records in it")
+		log.Println("There was a problem with the AXFR, or there were no records in it")
 		return handle_error(message, writer, "SERVFAIL")
 	}
 
@@ -110,7 +111,7 @@ func naive_update(zone_name string, records []dns.RR) {
 	rrs_short := []string{}
 	for _, rr := range records {
 		rrs_raw = append(rrs_raw, strings.Replace(rr.String(), "\t", " ", 0))
-		fmt.Println(rr.String())
+		log.Println(rr.String())
 		hdr := rr.Header()
 		rrs_short = append(rrs_short, hdr.Name+strconv.Itoa(int(hdr.Rrtype)))
 	}
@@ -118,13 +119,13 @@ func naive_update(zone_name string, records []dns.RR) {
 	rawrecords, _ := client.SMembers(zone_name).Result()
 	// Naively delete all records
 	for _, record := range rawrecords {
-		fmt.Println(fmt.Sprintf("deleting record %s", record))
+		log.Println(fmt.Sprintf("deleting record %s", record))
 		client.Del(record)
 	}
 
 	// Naively recreate all records from AXFR
 	for i, rr_key := range rrs_short {
-		fmt.Println(fmt.Sprintf("adding record %s", rr_key))
+		log.Println(fmt.Sprintf("adding record %s", rr_key))
 		client.Set(rr_key, rrs_raw[i], 0)
 		client.SAdd(zone_name, rr_key)
 	}

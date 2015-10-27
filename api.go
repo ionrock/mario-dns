@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
+	"log"
 	"net/http"
 )
 
@@ -20,7 +21,7 @@ func http_handle_zone(res http.ResponseWriter, req *http.Request) {
 
 	exists, err := client.SIsMember("zones", zone_name).Result()
 	if err != nil {
-		fmt.Println("Couldn't talk to redis to sismember")
+		log.Println("Couldn't talk to redis to sismember")
 	}
 
 	if exists == false {
@@ -37,19 +38,19 @@ func http_handle_zone(res http.ResponseWriter, req *http.Request) {
 
 	switch req.Method {
 	case "GET":
-		fmt.Println(fmt.Sprintf("HTTP GET /zones/%s", zone_name))
+		log.Println(fmt.Sprintf("HTTP GET /zones/%s", zone_name))
 		records := map[string][]string{
 			"records": rawrecords,
 		}
 		outgoingJSON, err := json.Marshal(records)
 		if err != nil {
-			fmt.Println(err.Error())
+			log.Println(err.Error())
 			http.Error(res, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		fmt.Fprint(res, string(outgoingJSON))
 	case "DELETE":
-		fmt.Println(fmt.Sprintf("HTTP DELETE /zones/%s", zone_name))
+		log.Println(fmt.Sprintf("HTTP DELETE /zones/%s", zone_name))
 		for _, record := range rawrecords {
 			client.Del(record)
 		}
@@ -62,14 +63,14 @@ func http_handle_zones(res http.ResponseWriter, req *http.Request) {
 
 	switch req.Method {
 	case "GET":
-		fmt.Println("HTTP GET /zones/")
+		log.Println("HTTP GET /zones/")
 		rawzones, _ := client.SMembers("zones").Result()
 		zones := map[string][]string{
 			"zones": rawzones,
 		}
 		outgoingJSON, err := json.Marshal(zones)
 		if err != nil {
-			fmt.Println(err.Error())
+			log.Println(err.Error())
 			http.Error(res, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -79,20 +80,20 @@ func http_handle_zones(res http.ResponseWriter, req *http.Request) {
 		decoder := json.NewDecoder(req.Body)
 		err := decoder.Decode(&zone)
 		if err != nil {
-			fmt.Println(err.Error())
+			log.Println(err.Error())
 			http.Error(res, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		fmt.Println(fmt.Sprintf("HTTP POST /zones/ name: %s", zone.Name))
+		log.Println(fmt.Sprintf("HTTP POST /zones/ name: %s", zone.Name))
 		exists, err := client.SIsMember("zones", zone.Name).Result()
 		if err != nil {
-			fmt.Println("Couldn't talk to redis to sismember")
+			log.Println("Couldn't talk to redis to sismember")
 		}
 
 		if exists == true {
 			errs := fmt.Sprintf("Duplicate zone %s", zone.Name)
-			fmt.Println(errs)
+			log.Println(errs)
 			http.Error(res, errs, http.StatusConflict)
 			return
 		}
@@ -101,7 +102,7 @@ func http_handle_zones(res http.ResponseWriter, req *http.Request) {
 
 		outgoingJSON, err := json.Marshal(zone)
 		if err != nil {
-			fmt.Println(err.Error())
+			log.Println(err.Error())
 			http.Error(res, err.Error(), http.StatusInternalServerError)
 			return
 		}
