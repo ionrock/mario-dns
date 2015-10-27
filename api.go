@@ -37,6 +37,7 @@ func http_handle_zone(res http.ResponseWriter, req *http.Request) {
 
 	switch req.Method {
 	case "GET":
+		fmt.Println(fmt.Sprintf("HTTP GET /zones/%s", zone_name))
 		records := map[string][]string{
 			"records": rawrecords,
 		}
@@ -48,6 +49,7 @@ func http_handle_zone(res http.ResponseWriter, req *http.Request) {
 		}
 		fmt.Fprint(res, string(outgoingJSON))
 	case "DELETE":
+		fmt.Println(fmt.Sprintf("HTTP DELETE /zones/%s", zone_name))
 		for _, record := range rawrecords {
 			client.Del(record)
 		}
@@ -60,6 +62,7 @@ func http_handle_zones(res http.ResponseWriter, req *http.Request) {
 
 	switch req.Method {
 	case "GET":
+		fmt.Println("HTTP GET /zones/")
 		rawzones, _ := client.SMembers("zones").Result()
 		zones := map[string][]string{
 			"zones": rawzones,
@@ -81,6 +84,7 @@ func http_handle_zones(res http.ResponseWriter, req *http.Request) {
 			return
 		}
 
+		fmt.Println(fmt.Sprintf("HTTP POST /zones/ name: %s", zone.Name))
 		exists, err := client.SIsMember("zones", zone.Name).Result()
 		if err != nil {
 			fmt.Println("Couldn't talk to redis to sismember")
