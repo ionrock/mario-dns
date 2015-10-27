@@ -58,6 +58,7 @@ func main() {
 	var redis_addr = flag.String("redis_addr", "127.0.0.1:6379", "redis ip:port")
 	var pass = flag.String("pass", "", "password for redis, if necessary")
 	var master_raw = flag.String("master", "127.0.0.1:53", "master for axfrs")
+	var port = flag.String("port", "53", "port to run on")
 	flag.Parse()
 
 	master = *master_raw
@@ -72,8 +73,8 @@ func main() {
 
 	prep_data()
 
-	go serve("udp", "0.0.0.0", "5358")
-	go serve("tcp", "0.0.0.0", "5358")
+	go serve("udp", "0.0.0.0", *port)
+	go serve("tcp", "0.0.0.0", *port)
 
 	router := GetRouter()
 	http.ListenAndServe(":8080", router)
